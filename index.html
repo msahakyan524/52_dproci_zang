@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Դպրոցի զանգ</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --text: #1c2430;
+      --muted: #566170;
+      --line: #e1e5ea;
+      --accent: #1f5fbf;
+      --accent-dark: #184c99;
+      --accent-soft: #eaf1fb;
+      --ok: #1d7a46;
+      --err: #b42318;
+      --radius: 16px;
+      --ease: 180ms ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Armenian", sans-serif;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    h1 { font-size: 32px; line-height: 1.25; margin: 0; }
+    h2 { font-size: 20px; line-height: 1.25; margin: 0; }
+
+    /* ---------- Header ---------- */
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .intro { margin: 0 0 8px; color: var(--muted); max-width: 66ch; }
+
+    .lang {
+      display: flex;
+      padding: 4px;
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .lang button {
+      min-width: 52px;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease), color var(--ease);
+    }
+    .lang button:hover { color: var(--text); }
+    .lang button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+    /* ---------- Cards ---------- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .bar { display: flex; flex-direction: column; gap: 16px; }
+
+    .status { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .status.err { color: var(--err); }
+
+    .dot {
+      flex: none;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #c3cad3;
+      transition: background var(--ease);
+    }
+    .dot.on { background: var(--ok); }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .ring-len { display: flex; align-items: center; gap: 8px; width: 100%; }
+
+    /* ---------- Buttons & inputs ---------- */
+    .btn {
+      min-height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease), border-color var(--ease), opacity var(--ease);
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+    .btn-small { font-size: 14px; padding: 0 12px; }
+
+    input {
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    input[type="number"] { width: 72px; }
+    input:focus, .btn:focus-visible, .lang button:focus-visible, .tab:focus-visible, summary:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .unit { color: var(--muted); }
+
+    /* ---------- Day tabs ---------- */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 24px;
+      background: var(--bg);
+      border-radius: 12px;
+    }
+    .tab {
+      position: relative;
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease), color var(--ease), box-shadow var(--ease);
+    }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(28, 36, 48, 0.12); }
+    .tab.has-bells::after {
+      content: "";
+      position: absolute;
+      left: 50%; bottom: 4px;
+      width: 4px; height: 4px;
+      margin-left: -2px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ---------- Day panel ---------- */
+    #day { display: flex; flex-direction: column; gap: 12px; }
+
+    .day-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+
+    .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 72px 1fr 12px 1fr;
+      align-items: center;
+      gap: 8px;
+    }
+    .row label { font-weight: 600; }
+    .row input { width: 100%; min-width: 0; padding: 0 8px; text-align: center; }
+    .row input::placeholder { color: #8a94a3; }
+    .row input.invalid { border-color: var(--err); box-shadow: 0 0 0 3px #fbe4e2; }
+    .row.cols { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: -4px; }
+    .row .unit { text-align: center; }
+
+    .day-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .preview {
+      margin: 4px 0 0;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+    }
+    .preview small { display: block; font-size: 14px; color: var(--muted); }
+    .preview.silent { background: var(--bg); color: var(--muted); }
+    .preview.warn small { color: var(--err); font-weight: 600; }
+
+    /* ---------- Help ---------- */
+    .help summary {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .help ol { margin: 8px 0 0; padding-left: 24px; max-width: 66ch; }
+    .help li { margin-bottom: 8px; }
+
+    @media (max-width: 480px) {
+      main { padding: 24px 16px; }
+      .controls .btn { flex: 1 1 auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="top">
+      <h1 data-i18n="title">Դպրոցի զանգ</h1>
+      <div class="lang" role="group" aria-label="Language">
+        <button data-lang="hy">Հայ</button>
+        <button data-lang="ru">Рус</button>
+        <button data-lang="en">Eng</button>
+      </div>
+    </header>
+    <p class="intro" data-i18n="intro"></p>
+
+    <section class="card bar">
+      <div class="status">
+        <span class="dot" id="dot"></span>
+        <span id="status"></span>
+      </div>
+      <div class="controls">
+        <label class="ring-len">
+          <span data-i18n="ringFor"></span>
+          <input type="number" id="ringSeconds" min="1" max="60" inputmode="numeric">
+          <span class="unit" data-i18n="sec"></span>
+        </label>
+        <button class="btn" id="connect"></button>
+        <button class="btn" id="test" data-i18n="test" disabled></button>
+        <button class="btn btn-primary" id="send" data-i18n="send" disabled></button>
+      </div>
+    </section>
+
+    <section class="card schedule">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="day" role="tabpanel"></div>
+    </section>
+
+    <details class="card help">
+      <summary data-i18n="howTo"></summary>
+      <ol>
+        <li data-i18n="step1"></li>
+        <li data-i18n="step2"></li>
+        <li data-i18n="step3"></li>
+      </ol>
+    </details>
+  </main>
+  <script>
+// Day numbers match the Arduino (and JavaScript): 0 = Sunday ... 6 = Saturday.
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DEFAULT_CLASSES = 6;
+const MAX_CLASSES = 15;        // 2 bells per class keeps us under the Nano's 30 per day
+const STORE = 'school-bell-v2';
+const LANG_STORE = 'school-bell-lang';
+
+// ---------- Translations ----------
+const I18N = {
+  hy: {
+    title: 'Դպրոցի զանգ',
+    intro: 'Լրացրեք յուրաքանչյուր դասի սկիզբն ու ավարտը։ Զանգը կհնչի այդ ժամերին։ Դատարկ օրերին զանգ չի հնչի։',
+    days: ['Կիրակի', 'Երկուշաբթի', 'Երեքշաբթի', 'Չորեքշաբթի', 'Հինգշաբթի', 'Ուրբաթ', 'Շաբաթ'],
+    short: ['Կիր', 'Երկ', 'Երք', 'Չրք', 'Հնգ', 'Ուրբ', 'Շբթ'],
+    ringFor: 'Զանգի տևողություն',
+    sec: 'վրկ',
+    connect: 'Միացնել զանգը',
+    disconnect: 'Անջատել',
+    test: 'Փորձարկել',
+    send: 'Ուղարկել զանգին',
+    notConnected: 'Միացված չէ',
+    connecting: 'Միանում է…',
+    connected: 'Միացված է',
+    sending: 'Ուղարկվում է…',
+    saved: 'Պահպանված է զանգում ✓',
+    ringing: 'Զանգում է…',
+    failed: 'Սխալ՝',
+    couldNotConnect: 'Չհաջողվեց միանալ՝',
+    unplugged: 'Զանգն անջատվեց',
+    noAnswer: 'Զանգը չի պատասխանում։',
+    noSerial: 'Միանալու համար բացեք էջը Chrome կամ Edge բրաուզերով համակարգչում։',
+    start: 'Սկիզբ',
+    end: 'Ավարտ',
+    lesson: (n) => `Դաս ${n}`,
+    addClass: '+ Ավելացնել դաս',
+    removeLast: 'Հեռացնել վերջինը',
+    sameAsMonday: 'Ինչպես երկուշաբթի',
+    bellCount: (n) => `Զանգերի քանակ՝ ${n}`,
+    noInfo: 'Տվյալներ չկան',
+    noBells: 'Այս օրը զանգ չկա',
+    endsBefore: (n) => `Դաս ${n}-ի ավարտը սկզբից շուտ է։`,
+    howTo: 'Ինչպես օգտվել',
+    step1: 'Միացրեք զանգի սարքը համակարգչին USB մալուխով և սեղմեք «Միացնել զանգը»։',
+    step2: 'Ընտրեք օրը և լրացրեք դասերի ժամերը։',
+    step3: 'Սեղմեք «Ուղարկել զանգին»։ Սա նաև ճշգրտում է զանգի ժամացույցը։ Դրանից հետո կարող եք անջատել մալուխը։',
+  },
+  ru: {
+    title: 'Школьный звонок',
+    intro: 'Укажите время начала и конца каждого урока. Звонок прозвенит в это время. В пустые дни звонка не будет.',
+    days: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+    short: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+    ringFor: 'Длительность',
+    sec: 'сек',
+    connect: 'Подключить звонок',
+    disconnect: 'Отключить',
+    test: 'Проверить',
+    send: 'Отправить в звонок',
+    notConnected: 'Не подключено',
+    connecting: 'Подключение…',
+    connected: 'Подключено',
+    sending: 'Отправка…',
+    saved: 'Сохранено в звонке ✓',
+    ringing: 'Звенит…',
+    failed: 'Ошибка:',
+    couldNotConnect: 'Не удалось подключиться:',
+    unplugged: 'Звонок отключён',
+    noAnswer: 'Звонок не отвечает.',
+    noSerial: 'Чтобы подключиться, откройте страницу в Chrome или Edge на компьютере.',
+    start: 'Начало',
+    end: 'Конец',
+    lesson: (n) => `Урок ${n}`,
+    addClass: '+ Добавить урок',
+    removeLast: 'Удалить последний',
+    sameAsMonday: 'Как в понедельник',
+    bellCount: (n) => `Звонков: ${n}`,
+    noInfo: 'Нет данных',
+    noBells: 'В этот день звонков нет',
+    endsBefore: (n) => `Урок ${n} заканчивается раньше, чем начинается.`,
+    howTo: 'Как пользоваться',
+    step1: 'Подключите устройство звонка к компьютеру USB-кабелем и нажмите «Подключить звонок».',
+    step2: 'Выберите день и заполните время уроков.',
+    step3: 'Нажмите «Отправить в звонок». Это также выставит часы звонка. После этого кабель можно отключить.',
+  },
+  en: {
+    title: 'School Bell',
+    intro: 'Enter the start and end time of every class. The bell rings at those times. Empty days stay silent.',
+    days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    short: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    ringFor: 'Ring for',
+    sec: 'sec',
+    connect: 'Connect bell',
+    disconnect: 'Disconnect',
+    test: 'Test ring',
+    send: 'Send to bell',
+    notConnected: 'Not connected',
+    connecting: 'Connecting…',
+    connected: 'Connected',
+    sending: 'Sending…',
+    saved: 'Saved on the bell ✓',
+    ringing: 'Ringing…',
+    failed: 'Failed:',
+    couldNotConnect: 'Could not connect:',
+    unplugged: 'Bell unplugged',
+    noAnswer: 'The bell did not answer.',
+    noSerial: 'Open this page in Chrome or Edge on a computer to connect.',
+    start: 'Start',
+    end: 'End',
+    lesson: (n) => `Class ${n}`,
+    addClass: '+ Add class',
+    removeLast: 'Remove last',
+    sameAsMonday: 'Same as Monday',
+    bellCount: (n) => `Bells: ${n}`,
+    noInfo: 'No info entered',
+    noBells: 'No bells this day',
+    endsBefore: (n) => `Class ${n} ends before it starts.`,
+    howTo: 'How to use',
+    step1: 'Plug the bell into the computer with the USB cable and press “Connect bell”.',
+    step2: 'Pick a day and fill in the class times.',
+    step3: 'Press “Send to bell”. This also sets the bell’s clock. Then you can unplug the cable.',
+  },
+};
+
+let lang = I18N[localStorage.getItem(LANG_STORE)] ? localStorage.getItem(LANG_STORE) : 'hy';
+const t = (key, ...args) => {
+  const v = I18N[lang][key];
+  return typeof v === 'function' ? v(...args) : v;
+};
+
+// ---------- State ----------
+const emptyClass = () => ({ start: '', end: '' });
+const emptyDay = () => ({ classes: Array.from({ length: DEFAULT_CLASSES }, emptyClass) });
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE));
+    if (saved && saved.days) return saved;
+  } catch {}
+  const days = {};
+  DAY_ORDER.forEach((d) => { days[d] = emptyDay(); });
+  return { ringSeconds: 5, days };
+}
+
+const state = loadState();
+const persist = () => localStorage.setItem(STORE, JSON.stringify(state));
+let selected = new Date().getDay();       // open on today
+
+// ---------- Bell times ----------
+const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+const pad = (n) => String(n).padStart(2, '0');
+const fmt = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+
+// The bell rings at every start and end time that is filled in.
+function ringTimes(day) {
+  const set = new Set();
+  let badClass = 0;
+  day.classes.forEach((c, i) => {
+    if (c.start) set.add(toMin(c.start));
+    if (c.end) set.add(toMin(c.end));
+    if (c.start && c.end && toMin(c.end) <= toMin(c.start)) badClass = i + 1;
+  });
+  return { times: [...set].sort((a, b) => a - b), badClass };
+}
+
+// ---------- Rendering ----------
+const tabsEl = document.getElementById('tabs');
+const dayEl = document.getElementById('day');
+
+function renderStatic() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-lang]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+}
+
+function renderTabs() {
+  tabsEl.innerHTML = DAY_ORDER.map((d) => {
+    const has = ringTimes(state.days[d]).times.length > 0;
+    return `<button class="tab${has ? ' has-bells' : ''}" role="tab" data-day="${d}"
+      aria-selected="${d === selected}" title="${t('days')[d]}">${t('short')[d]}</button>`;
+  }).join('');
+}
+
+function timeInput(c, i, f) {
+  return `<input id="c${i}-${f}" type="text" inputmode="numeric" autocomplete="off" maxlength="5"
+      placeholder="--:--" data-f="${f}" data-i="${i}" value="${c[f]}"
+      aria-label="${t('lesson', i + 1)} – ${t(f)}">`;
+}
+
+function rowHtml(c, i) {
+  return `<li class="row">
+    <label for="c${i}-start">${t('lesson', i + 1)}</label>
+    ${timeInput(c, i, 'start')}
+    <span class="unit" aria-hidden="true">–</span>
+    ${timeInput(c, i, 'end')}
+  </li>`;
+}
+
+function renderDay() {
+  const day = state.days[selected];
+  dayEl.innerHTML = `
+    <div class="day-head">
+      <h2>${t('days')[selected]}</h2>
+      ${selected === 1 ? '' : `<button class="btn btn-small" data-act="copy">${t('sameAsMonday')}</button>`}
+    </div>
+    <div class="row cols" aria-hidden="true"><span></span><span>${t('start')}</span><span></span><span>${t('end')}</span></div>
+    <ol class="rows">${day.classes.map(rowHtml).join('')}</ol>
+    <div class="day-actions">
+      <button class="btn btn-small" data-act="add" ${day.classes.length >= MAX_CLASSES ? 'disabled' : ''}>${t('addClass')}</button>
+      <button class="btn btn-small" data-act="remove" ${day.classes.length <= 1 ? 'disabled' : ''}>${t('removeLast')}</button>
+    </div>
+    <p class="preview"></p>`;
+  updatePreview();
+}
+
+function updatePreview() {
+  const el = dayEl.querySelector('.preview');
+  const { times, badClass } = ringTimes(state.days[selected]);
+  el.classList.toggle('silent', times.length === 0);
+  el.classList.toggle('warn', badClass > 0);
+  el.innerHTML = times.length
+    ? `<small>${badClass ? t('endsBefore', badClass) : t('bellCount', times.length)}</small>${times.map(fmt).join(' · ')}`
+    : `<small>${t('noInfo')}</small>${t('noBells')}`;
+  tabsEl.querySelector(`[data-day="${selected}"]`).classList.toggle('has-bells', times.length > 0);
+}
+
+function renderAll() {
+  renderStatic();
+  renderTabs();
+  renderDay();
+  renderStatus();
+  refreshButtons();
+}
+
+tabsEl.addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  selected = Number(tab.dataset.day);
+  renderTabs();
+  renderDay();
+});
+
+// Typed time -> "HH:MM", "" for empty, or null if it isn't a time (yet).
+// Accepts 830, 0830, 8:30, 8.30, 8 30 and a bare hour like 8.
+function parseTyped(text) {
+  const v = text.trim();
+  if (!v) return '';
+  const m = v.match(/^(\d{1,2})(?:[:.,\s-]?(\d{2}))?$/);
+  if (!m) return null;
+  const h = Number(m[1]), min = Number(m[2] || 0);
+  if (h > 23 || min > 59) return null;
+  return `${pad(h)}:${pad(min)}`;
+}
+
+// While typing: never touch the text, only update the schedule.
+dayEl.addEventListener('input', (e) => {
+  const f = e.target.dataset.f;
+  if (!f) return;
+  e.target.classList.remove('invalid');
+  state.days[selected].classes[Number(e.target.dataset.i)][f] = parseTyped(e.target.value) || '';
+  persist();
+  updatePreview();
+});
+
+// When leaving the box: tidy it to HH:MM, or mark it red if it isn't a time.
+dayEl.addEventListener('focusout', (e) => {
+  if (!e.target.dataset.f) return;
+  const parsed = parseTyped(e.target.value);
+  if (parsed === null) e.target.classList.add('invalid');
+  else e.target.value = parsed;
+});
+
+dayEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.dataset.f) e.target.blur();
+});
+
+dayEl.addEventListener('click', (e) => {
+  const act = e.target.dataset.act;
+  if (!act) return;
+  const day = state.days[selected];
+  if (act === 'add' && day.classes.length < MAX_CLASSES) day.classes.push(emptyClass());
+  else if (act === 'remove' && day.classes.length > 1) day.classes.pop();
+  else if (act === 'copy') state.days[selected] = structuredClone(state.days[1]);
+  persist();
+  renderTabs();
+  renderDay();
+});
+
+document.querySelector('.lang').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-lang]');
+  if (!b) return;
+  lang = b.dataset.lang;
+  localStorage.setItem(LANG_STORE, lang);
+  renderAll();
+});
+
+const ringInput = document.getElementById('ringSeconds');
+ringInput.value = state.ringSeconds;
+ringInput.addEventListener('input', () => {
+  const n = Math.round(Number(ringInput.value));
+  if (n >= 1 && n <= 60) { state.ringSeconds = n; persist(); }
+});
+
+// ---------- Commands for the Nano ----------
+function commands() {
+  const now = new Date();
+  const list = [
+    `clock ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+      `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+    `len ${state.ringSeconds}`,
+  ];
+  DAY_ORDER.forEach((d) => {
+    list.push(`day ${d} ${ringTimes(state.days[d]).times.map(fmt).join(' ')}`.trim());
+  });
+  return list;
+}
+
+// ---------- USB connection (Web Serial) ----------
+const hasSerial = 'serial' in navigator;
+const statusEl = document.getElementById('status');
+const dotEl = document.getElementById('dot');
+const connectBtn = document.getElementById('connect');
+const sendBtn = document.getElementById('send');
+const testBtn = document.getElementById('test');
+
+let port = null, reader = null, writer = null, readDone = null, busy = false;
+let waiters = [];
+let status = { key: hasSerial ? 'notConnected' : 'noSerial', extra: '', isError: false };
+
+function setStatus(key, extra = '', isError = false) {
+  status = { key, extra, isError };
+  renderStatus();
+}
+
+function renderStatus() {
+  statusEl.textContent = t(status.key) + (status.extra ? ' ' + status.extra : '');
+  statusEl.parentElement.classList.toggle('err', status.isError);
+}
+
+function refreshButtons() {
+  const connected = Boolean(port);
+  dotEl.classList.toggle('on', connected);
+  connectBtn.textContent = connected ? t('disconnect') : t('connect');
+  connectBtn.disabled = busy || !hasSerial;
+  sendBtn.disabled = !connected || busy;
+  testBtn.disabled = !connected || busy;
+}
+
+function onLine(line) {
+  console.log('←', line);
+  waiters = waiters.filter((w) => {
+    if (!w.test(line)) return true;
+    w.resolve(line);
+    return false;
+  });
+}
+
+function waitFor(test, ms) {
+  return new Promise((resolve, reject) => {
+    const w = { test, resolve };
+    waiters.push(w);
+    setTimeout(() => {
+      waiters = waiters.filter((x) => x !== w);
+      reject(new Error(t('noAnswer')));
+    }, ms);
+  });
+}
+
+async function readLoop() {
+  const decoder = new TextDecoder();
+  let buffer = '';
+  reader = port.readable.getReader();
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let i;
+      while ((i = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, i).trim();
+        buffer = buffer.slice(i + 1);
+        if (line) onLine(line);
+      }
+    }
+  } catch (err) {
+    console.warn('Connection lost:', err.message);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function send(cmd) {
+  console.log('→', cmd);
+  const reply = waitFor((l) => l.startsWith('OK') || l.startsWith('ERR'), 3000);
+  await writer.write(new TextEncoder().encode(cmd + '\n'));
+  const line = await reply;
+  if (line.startsWith('ERR')) throw new Error(line.slice(4));
+  return line;
+}
+
+async function connect() {
+  busy = true;
+  refreshButtons();
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 9600 });
+    writer = port.writable.getWriter();
+    setStatus('connecting');
+    // Opening the port restarts the Nano; wait for it to say READY.
+    const ready = waitFor((l) => l === 'READY', 4000).catch(() => {});
+    readDone = readLoop();
+    await ready;
+    setStatus('connected');
+  } catch (err) {
+    port = null;
+    if (err.name === 'NotFoundError') setStatus('notConnected');
+    else setStatus('couldNotConnect', err.message, true);
+  }
+  busy = false;
+  refreshButtons();
+}
+
+async function disconnect() {
+  try { await reader?.cancel(); } catch {}
+  await readDone;
+  try { writer?.releaseLock(); } catch {}
+  try { await port?.close(); } catch {}
+  port = null;
+  setStatus('notConnected');
+  refreshButtons();
+}
+
+async function run(label, cmds, doneKey) {
+  busy = true;
+  refreshButtons();
+  setStatus(label);
+  try {
+    for (const cmd of cmds) await send(cmd);
+    setStatus(doneKey);
+  } catch (err) {
+    setStatus('failed', err.message, true);
+  }
+  busy = false;
+  refreshButtons();
+}
+
+if (hasSerial) {
+  connectBtn.addEventListener('click', () => (port ? disconnect() : connect()));
+  sendBtn.addEventListener('click', () => run('sending', [...commands(), 'list'], 'saved'));
+  testBtn.addEventListener('click', () => run('ringing', ['ring'], 'connected'));
+  navigator.serial.addEventListener('disconnect', (e) => {
+    if (e.target === port) { port = null; setStatus('unplugged'); refreshButtons(); }
+  });
+}
+
+renderAll();
+  </script>
+</body>
+</html>
